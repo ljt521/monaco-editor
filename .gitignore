@@ -1,0 +1,71 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+# compiled output
+/dist
+/tmp
+/resources
+/out
+/temp
+build/**
+!build/*.node
+!build/*.dll
+
+/node_modules
+# go
+addon/pkg/
+
+
+# VS
+/x64/
+.vs/
+
+# dependencies
+#/node_modules
+
+# IDEs and editors
+/**/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+.vscode/
+
+# IDE - VSCode
+.vscode/*
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage/*
+/libpeerconnection.log
+npm-debug.log
+debug.log
+testem.log
+/typings
+bash.exe.stackdump
+
+# e2e
+/e2e/*.js
+/e2e/*.map
+
+#System Files
+.DS_Store
+Thumbs.db
+demo.js
+test.json
+/addon/src/github.com/
+/addon/src/golang.org/
+
+# orocos
+
+
+# Eigen
+
+# boost_1_64_0
+/addon/third/boost_1_64_0/
+!/addon/third/boost_1_64_0/boost/
+/addon/third/boost_1_64_0/boost/test/
+
+
+/src/assets/lua-script/run.lua
+release-builds/terminal-setup.x64.exe
