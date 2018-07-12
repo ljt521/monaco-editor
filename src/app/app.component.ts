@@ -24,10 +24,6 @@ export class AppComponent implements OnInit, AfterViewInit {
   onInit(editor) {
     this._editor = editor;
     const line = this._editor.getPosition();
-    console.log(this._editor);
-  }
-  keyChange(e) {
-    if (e.keyCode === 13) {
-    }
+    console.log(line);
   }
 }
