@@ -1,5 +1,4 @@
 import {Component, OnInit, AfterViewInit} from '@angular/core';
-import {e} from '@angular/core/src/render3';
 
 @Component({
   selector: 'app-root',
@@ -10,169 +9,164 @@ export class AppComponent implements OnInit, AfterViewInit {
   options: any;
   code: any;
   _editor: any;
+  config: any;
 
   ngOnInit() {
+    this.config = {
+      // Set defaultToken to invalid to see what you do not tokenize yet
+      // defaultToken: 'invalid',
+      keyword: [
+        'ABSTRACT', 'CONTINUE', 'FOR', 'NEW', 'SWITCH', 'ASSERT', 'GOTO', 'DO',
+        'IF', 'PRIVATE', 'THIS', 'BREAK', 'PROTECTED', 'THROW', 'ELSE', 'PUBLIC',
+        'ENUM', 'RETURN', 'CATCH', 'TRY', 'INTERFACE', 'STATIC', 'CLASS',
+        'FINALLY', 'CONST', 'SUPER', 'WHILE', 'TRUE', 'FALSE', 'END', 'TESK', 'FUNCTION'
+      ],
+
+      type: [
+        'BOOLEAN', 'DOUBLE', 'BYTE', 'INT', 'SHORT', 'CHAR', 'VOID', 'LONG', 'FLOAT'
+      ],
+      tag: ['ML', 'MP', 'SetOne', 'REL', 'MIO', 'WAIT'],
+      operators: [
+        '=', '>', '<', '!', '~', '?', ':', '==', '<=', '>=', '!=',
+        '&&', '||', '++', '--', '+', '-', '*', '/', '&', '|', '^', '%',
+        '<<', '>>', '>>>', '+=', '-=', '*=', '/=', '&=', '|=', '^=',
+        '%=', '<<=', '>>=', '>>>='
+      ],
+
+      // we include these common regular expressions
+      symbols: /[=><!~?:&|+\-*\/\^%]+/,
+
+      // C# style strings
+      escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
+
+      // The main tokenizer for our languages
+      tokenizer: {
+        root: [
+          // identifiers and keywords
+          [/[A-Z_$][\w$]*/, {
+            cases: {
+              '@type': 'type',
+              '@keyword': 'keyword',
+              '@tag': 'tag',
+              '@default': 'identifier'
+            }
+          }],
+          [/[A-Z][\w\$]*/, 'type.identifier'],  // to show class names nicely
+
+          // whitespace
+          {include: '@whitespace'},
+
+          // delimiters and operators
+          [/[{}()\[\]]/, '@brackets'],
+          [/[<>](?!@symbols)/, '@brackets'],
+          [/@symbols/, {
+            cases: {
+              '@operators': 'operator',
+              '@default': ''
+            }
+          }],
+
+          // @ annotations.
+          // As an example, we emit a debugging log message on these tokens.
+          // Note: message are supressed during the first load -- change some lines to see them.
+          [/@\s*[a-zA-Z_\$][\w\$]*/, {token: 'annotation', log: 'annotation token: $0'}],
+
+          // numbers
+          [/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
+          [/0[xX][0-9a-fA-F]+/, 'number.hex'],
+          [/\d+/, 'number'],
+
+          // delimiter: after number because of .\d floats
+          [/[;,.]/, 'delimiter'],
+
+          // strings
+          [/"([^"\\]|\\.)*$/, 'string.invalid'],  // non-teminated string
+          [/"/, {token: 'string.quote', bracket: '@open', next: '@string'}],
+
+          // characters
+          [/'[^\\']'/, 'string'],
+          [/(')(@escapes)(')/, ['string', 'string.escape', 'string']],
+          [/'/, 'string.invalid']
+        ],
+
+        comment: [
+          [/[^\/*]+/, 'comment'],
+          [/\/\*/, 'comment', '@push'],    // nested comment
+          ['\\*/', 'comment', '@pop'],
+          [/[\/*]/, 'comment']
+        ],
+
+        string: [
+          [/[^\\"]+/, 'string'],
+          [/@escapes/, 'string.escape'],
+          [/\\./, 'string.escape.invalid'],
+          [/"/, {token: 'string.quote', bracket: '@close', next: '@pop'}]
+        ],
+
+        whitespace: [
+          [/[ \t\r\n]+/, 'white'],
+          [/\/\*/, 'comment', '@comment'],
+          [/\/\/.*$/, 'comment'],
+        ],
+      },
+    };
   }
 
   ngAfterViewInit() {
   }
 
   onInit(editor) {
+    console.log(editor);
+    editor.trigger('随便写点儿啥', 'editor.action.triggerSuggest', {});
 
     function getCode() {
       return [
-        'class [Sun Mar 7 16:02:00 2004] [notice] Apache/1.3.29 (Unix) configured -- resuming normal operations',
         '[Sun Mar 7 16:02:00 2004] [info] Server built: Feb 27 2004 13:56:37',
         '[Sun Mar 7 16:02:00 2004] [notice] Accept mutex: sysvsem (Default: sysvsem)',
-        '[Sun Mar 7 16:05:49 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 16:45:56 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 17:13:50 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 17:21:44 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 17:23:53 2004] statistics: Use of uninitialized value in concatenation (.) or string at /home/httpd/twiki/lib/TWiki.pm line 528.',
-        '[Sun Mar 7 17:23:53 2004] statistics: Can\'t create file /home/httpd/twiki/data/Main/WebStatistics.txt - Permission denied',
-        '[Sun Mar 7 17:27:37 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 17:31:39 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 17:58:00 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 18:00:09 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 18:10:09 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 18:19:01 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 18:42:29 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 18:52:30 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 18:58:52 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 19:03:58 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 19:08:55 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 20:04:35 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 20:11:33 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 20:12:55 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 20:25:31 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 20:44:48 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 20:58:27 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 21:16:17 2004] [error] [client xx.xx.xx.xx] File does not exist: /home/httpd/twiki/view/Main/WebHome',
-        '[Sun Mar 7 21:20:14 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 21:31:12 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 21:39:55 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Sun Mar 7 21:44:10 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Mon Mar 8 01:35:13 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Mon Mar 8 01:47:06 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Mon Mar 8 01:59:13 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Mon Mar 8 02:12:24 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Mon Mar 8 02:54:54 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Mon Mar 8 03:46:27 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Mon Mar 8 03:48:18 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Mon Mar 8 03:52:17 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Mon Mar 8 03:55:09 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Mon Mar 8 04:22:55 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Mon Mar 8 04:24:47 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Mon Mar 8 04:40:32 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Mon Mar 8 04:55:40 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Mon Mar 8 04:59:13 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Mon Mar 8 05:22:57 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Mon Mar 8 05:24:29 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '[Mon Mar 8 05:31:47 2004] [info] [client xx.xx.xx.xx] (104)Connection reset by peer: client stopped connection before send body completed',
-        '<11>httpd[31628]: [error] [client xx.xx.xx.xx] File does not exist: /usr/local/installed/apache/htdocs/squirrelmail/_vti_inf.html in 29-Mar 15:18:20.50 from xx.xx.xx.xx',
-        '<11>httpd[25859]: [error] [client xx.xx.xx.xx] File does not exist: /usr/local/installed/apache/htdocs/squirrelmail/_vti_bin/shtml.exe/_vti_rpc in 29-Mar 15:18:20.54 from xx.xx.xx.xx',
+        '/* Type source code in \\your language here*/',
+        'class a abstract if  double',
+        'VAR finishCount = 0\n' +
+        '\n' +
+        '/* 初始化 */\n' +
+        'P1 = [X400 Y0 Z0 RX0]\n' +
+        'P2 = [X200 Y200 Z0 RX0]\n' +
+        '\n' +
+        'ARM = RIGHT\n' +
+        'MIO.DO1=OFF\n' +
+        'WAIT 0.5\n' +
+        'TOOL1 CSYS1 // 选择工具坐标系和参考坐标系\n' +
+        '\n' +
+        'FOR 100\n' +
+        '    MP P1 F100   // 点到点移动到P[1]位置，速度100%\n' +
+        '    GetOne          //执行抓取\n' +
+        '    MP P2 F100\n' +
+        '    SetOne\n' +
+        '    IF MIO.DI1==ON                   // 判断是否放置正常\n' +
+        '        finishCount = finishCount + 1\n' +
+        '        LOG "放置数量:" + finishCount\n' +
+        '    ELSE\n' +
+        '        ALM "放置出错！"\n' +
+        '        PAUSE           // 程序暂停\n' +
+        '    END\n' +
+        'END\n' +
+        '\n' +
+        '/* 定义一个抓取的任务 */\n' +
+        'TESK GetOne\n' +
+        '    ML REL Z-50 V1000 CNT0\n' +
+        '    MIO.DO1=ON\n' +
+        '    WAIT 0.5\n' +
+        '    ML Z50\n' +
+        'END\n' +
+        '[\'sd\', \'\']' +
+        '\n' +
+        '/* 定义一个放下的任务 */\n' +
+        'TESK SetOne\n' +
+        '    ML REL Z-48 V1000 CNT0\n' +
+        '    MIO.DO1=ON\n' +
+        '    WAIT 0.5\n' +
+        '    ML Z48\n' +
+        'END\n'
       ].join('\n');
-    }
-
-    function getOption() {
-      return {
-        // Set defaultToken to invalid to see what you do not tokenize yet
-        // defaultToken: 'invalid',
-
-        keywords: [
-          'abstract', 'continue', 'for', 'new', 'switch', 'assert', 'goto', 'do',
-          'if', 'private', 'this', 'break', 'protected', 'throw', 'else', 'public',
-          'enum', 'return', 'catch', 'try', 'interface', 'static', 'class',
-          'finally', 'const', 'super', 'while', 'true', 'false'
-        ],
-
-        typeKeywords: [
-          'boolean', 'double', 'byte', 'int', 'short', 'char', 'void', 'long', 'float'
-        ],
-
-        operators: [
-          '=', '>', '<', '!', '~', '?', ':', '==', '<=', '>=', '!=',
-          '&&', '||', '++', '--', '+', '-', '*', '/', '&', '|', '^', '%',
-          '<<', '>>', '>>>', '+=', '-=', '*=', '/=', '&=', '|=', '^=',
-          '%=', '<<=', '>>=', '>>>='
-        ],
-
-        // we include these common regular expressions
-        symbols: /[=><!~?:&|+\-*\/\^%]+/,
-
-        // C# style strings
-        escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
-
-        // The main tokenizer for our languages
-        tokenizer: {
-          root: [
-            // identifiers and keywords
-            [/[a-z_$][\w$]*/, {
-              cases: {
-                typeKeywords: 'typeKeywords',
-                keywords: 'keyword',
-                default: 'identifier'
-              }
-            }],
-            [/[A-Z][\w\$]*/, 'type.identifier'],  // to show class names nicely
-
-            // whitespace
-            {include: '@whitespace'},
-
-            // delimiters and operators
-            [/[{}()\[\]]/, '@brackets'],
-            [/[<>](?!symbols)/, '@brackets'],
-            [/symbols/, {
-              cases: {
-                operators: 'operator',
-                default: ''
-              }
-            }],
-
-            // @ annotations.
-            // As an example, we emit a debugging log message on these tokens.
-            // Note: message are supressed during the first load -- change some lines to see them.
-            [/@\s*[a-zA-Z_\$][\w\$]*/, {token: 'annotation', log: 'annotation token: $0'}],
-
-            // numbers
-            [/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
-            [/0[xX][0-9a-fA-F]+/, 'number.hex'],
-            [/\d+/, 'number'],
-
-            // delimiter: after number because of .\d floats
-            [/[;,.]/, 'delimiter'],
-
-            // strings
-            [/"([^"\\]|\\.)*$/, 'string.invalid'],  // non-teminated string
-            [/"/, {token: 'string.quote', bracket: '@open', next: '@string'}],
-
-            // characters
-            [/'[^\\']'/, 'string'],
-            [/(')(escapes)(')/, ['string', 'string.escape', 'string']],
-            [/'/, 'string.invalid']
-          ],
-
-          comment: [
-            [/[^\/*]+/, 'comment'],
-            [/\/\*/, 'comment', '@push'],    // nested comment
-            ['\\*/', 'comment', '@pop'],
-            [/[\/*]/, 'comment']
-          ],
-
-          string: [
-            [/[^\\"]+/, 'string'],
-            [/escapes/, 'string.escape'],
-            [/\\./, 'string.escape.invalid'],
-            [/"/, {token: 'string.quote', bracket: '@close', next: '@pop'}]
-          ],
-
-          whitespace: [
-            [/[ \t\r\n]+/, 'white'],
-            [/\/\*/, 'comment', '@comment'],
-            [/\/\/.*$/, 'comment'],
-          ],
-        },
-      };
     }
 
     this._editor = editor;
@@ -180,24 +174,25 @@ export class AppComponent implements OnInit, AfterViewInit {
     monaco.languages.register({id: 'mySpecialLanguage'});
 
 // Register a tokens provider for the language
-    console.log(getOption().tokenizer);
-    const ops: any = {
-      tokenizer: getOption().tokenizer
-    };
-    monaco.languages.setMonarchTokensProvider('mySpecialLanguage', ops);
+    monaco.languages.setMonarchTokensProvider('mySpecialLanguage', this.config);
 
 // Define a new theme that constains only rules that match this language
     const setOp: any = {
       base: 'vs',
-      inherit: false,
+      inherit: true,
       rules: [
         {token: 'custom-info', foreground: '808080'},
         {token: 'custom-error', foreground: 'ff0000', fontStyle: 'bold'},
         {token: 'custom-notice', foreground: 'FFA500'},
         {token: 'custom-date', foreground: '008800'},
-        {token: 'number', foreground: 'ff0000'},
-        {token: 'keyword', foreground: 'ff0000'},
-        {token: 'typeKeywords', foreground: 'ff0000'}
+        {token: 'number', foreground: '000000'},
+        {token: 'keyword', foreground: '9976ab'},
+        {token: 'type', foreground: 'cd7831'},
+        {token: 'string', foreground: '008000'},
+        {token: 'string.escape', foreground: '008000'},
+        {token: 'comment', foreground: '008000'},
+        {token: 'teg', foreground: '9976ab'},
+        {token: 'delimiter', foreground: '9976ab'},
       ]
     };
     monaco.editor.defineTheme('myCoolTheme', setOp);
@@ -207,23 +202,25 @@ export class AppComponent implements OnInit, AfterViewInit {
       provideCompletionItems: () => {
         return [
           {
-            label: 'simpleText',
+            label: 'P1',
             kind: monaco.languages.CompletionItemKind.Text
           }, {
-            label: 'testing',
+            label: 'FUNCTION',
             kind: monaco.languages.CompletionItemKind.Keyword,
             insertText: {
-              value: 'testing(${1:condition})'
+              value: ['FUNCTION(${1:E}) {',
+                  '',
+                '}'].join('\n')
             }
           },
           {
-            label: 'ifelse',
+            label: 'IFELSE',
             kind: monaco.languages.CompletionItemKind.Snippet,
             insertText: {
               value: [
-                'if (${1:condition}) {',
+                'IF (${1:BOOLE}) {',
                 '\t$0',
-                '} else {',
+                '} ELSE {',
                 '\t',
                 '}'
               ].join('\n')
